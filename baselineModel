@@ -1,0 +1,17 @@
+import pandas as pd
+
+ Load the training and testing datasets
+train = pd.read_csv("train.csv")
+test = pd.read_csv("test.csv")
+
+#  Fit the baseline model by calculating the average spend from the training data
+baseline_spend = train['spend'].mean()
+
+#  Prepare the result dataframe for test data
+base_result = test[['customer_id']].copy()
+base_result['spend'] = baseline_spend
+
+#Output the result for verification
+print(base_result.head())
+
+# The resulting DataFrame 'base_result' contains customer_id and the predicted spend for each customer
