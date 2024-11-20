@@ -1,0 +1,62 @@
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import SimpleImputer
+
+#Load the training and testing datasets
+train = pd.read_csv("train.csv")
+test = pd.read_csv("test.csv")
+
+# Preprocess the data
+# Separate the target variable 'spend' and the features
+X_train = train.drop(columns=['spend', 'customer_id'])
+y_train = train['spend']
+X_test = test.drop(columns=['customer_id'])
+
+# Identify categorical and numerical features
+categorical_features = ['region', 'loyalty_years', 'joining_month', 'promotion']
+numerical_features = ['first_month', 'items_in_first_month']
+
+# Handle missing values
+# Fill missing numerical values with 0
+imputer_num = SimpleImputer(strategy='mean')
+X_train[numerical_features] = imputer_num.fit_transform(X_train[numerical_features])
+X_test[numerical_features] = imputer_num.transform(X_test[numerical_features])
+
+# Fill missing categorical values with "Unknown"
+imputer_cat = SimpleImputer(strategy='most_frequent')
+X_train[categorical_features] = imputer_cat.fit_transform(X_train[categorical_features])
+X_test[categorical_features] = imputer_cat.transform(X_test[categorical_features])
+
+# Encode categorical variables using OneHotEncoding
+encoder = OneHotEncoder(drop='first', sparse=False)
+X_train_encoded = pd.DataFrame(encoder.fit_transform(X_train[categorical_features]), 
+                               columns=encoder.get_feature_names_out(categorical_features))
+X_test_encoded = pd.DataFrame(encoder.transform(X_test[categorical_features]), 
+                              columns=encoder.get_feature_names_out(categorical_features))
+
+# Concatenate numerical and encoded categorical features
+X_train_full = pd.concat([X_train[numerical_features].reset_index(drop=True), X_train_encoded], axis=1)
+X_test_full = pd.concat([X_test[numerical_features].reset_index(drop=True), X_test_encoded], axis=1)
+
+# Add constant (intercept) term to the model
+X_train_full = sm.add_constant(X_train_full)
+X_test_full = sm.add_constant(X_test_full)
+
+# Fit OLS regression model using statsmodels
+ols_model = sm.OLS(y_train, X_train_full).fit()
+
+# Make predictions on the test set
+test_predictions = ols_model.predict(X_test_full)
+
+# Create the result dataframe
+compare_result = test[['customer_id']].copy()
+compare_result['spend'] = test_predictions
+
+# Round the predictions to 2 decimal places
+compare_result['spend'] = compare_result['spend'].round(2)
+
+# Output the result for verification
+print(compare_result.head())
+
+# The resulting DataFrame 'compare_result' contains customer_id and the predicted spend for each customer
