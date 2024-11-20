@@ -1,0 +1,56 @@
+import pandas as pd
+# Load the data
+loyalty_data = pd.read_csv("loyalty.csv")
+
+# Identify and replace missing values
+
+# Replace missing values in numeric columns
+loyalty_data['spend'].fillna(0, inplace=True)
+loyalty_data['first_month'].fillna(0, inplace=True)
+loyalty_data['items_in_first_month'].fillna(0, inplace=True)
+
+# Replace missing values in categorical columns
+loyalty_data['region'].fillna("Unknown", inplace=True)
+loyalty_data['loyalty_years'].fillna('0-1', inplace=True)
+loyalty_data['joining_month'].fillna("Unknown", inplace=True)
+loyalty_data['promotion'].fillna('No', inplace=True)
+
+# Clean the numeric columns to avoid errors during type conversion
+# Replace any invalid entries in 'spend' and 'first_month'
+loyalty_data['spend'] = pd.to_numeric(loyalty_data['spend'], errors='coerce').fillna(0)
+loyalty_data['first_month'] = pd.to_numeric(loyalty_data['first_month'], errors='coerce').fillna(0)
+
+# Ensure there are no negative values in the first month
+loyalty_data['first_month'] = loyalty_data['first_month'].clip(lower=0)
+
+# Convert 'spend' and 'first_month' to float, rounding to two decimal places
+loyalty_data['spend'] = loyalty_data['spend'].astype(float).round(2)
+loyalty_data['first_month'] = loyalty_data['first_month'].astype(float).round(2)
+
+# Convert 'items_in_first_month' to integer
+loyalty_data['items_in_first_month'] = loyalty_data['items_in_first_month'].astype(int)
+
+# Clean categorical and text data by manipulating strings
+
+# Standardize 'region' values
+valid_regions = ['Americas', 'Asia/Pacific', 'Europe', 'Middle East/Africa']
+loyalty_data['region'] = loyalty_data['region'].str.title().str.strip()
+loyalty_data['region'] = loyalty_data['region'].where(loyalty_data['region'].isin(valid_regions), "Unknown")
+
+# Standardize 'loyalty_years'
+valid_loyalty_years = ['0-1', '1-3', '3-5', '5-10', '10+']
+loyalty_data['loyalty_years'] = loyalty_data['loyalty_years'].str.strip()
+loyalty_data['loyalty_years'] = loyalty_data['loyalty_years'].where(loyalty_data['loyalty_years'].isin(valid_loyalty_years), '0-1')
+
+# Standardize 'joining_month'
+valid_joining_months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+loyalty_data['joining_month'] = loyalty_data['joining_month'].str.strip().str.capitalize()
+loyalty_data['joining_month'] = loyalty_data['joining_month'].where(loyalty_data['joining_month'].isin(valid_joining_months), "Unknown")
+
+# Standardize 'promotion'
+loyalty_data['promotion'] = loyalty_data['promotion'].str.strip().str.capitalize()
+loyalty_data['promotion'] = loyalty_data['promotion'].where(loyalty_data['promotion'].isin(['Yes', 'No']), 'No')
+
+# Output the cleaned DataFrame
+clean_data = loyalty_data
+print(clean_data.info())
