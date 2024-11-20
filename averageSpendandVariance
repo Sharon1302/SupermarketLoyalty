@@ -1,0 +1,18 @@
+import pandas as pd
+df = pd.read_csv("loyalty.csv")
+
+# Group the data by 'loyalty_years' and calculate the average spend and variance
+spend_by_years = df.groupby('loyalty_years').agg(
+    avg_spend=('spend', 'mean'),
+    var_spend=('spend', 'var')
+).reset_index()
+
+# Round the results to 2 decimal places
+spend_by_years['avg_spend'] = spend_by_years['avg_spend'].round(2)
+spend_by_years['var_spend'] = spend_by_years['var_spend'].round(2)
+
+# Output the result for verification
+print(spend_by_years)
+
+# The resulting DataFrame is 'spend_by_years' with columns: loyalty_years, avg_spend, var_spend
+
